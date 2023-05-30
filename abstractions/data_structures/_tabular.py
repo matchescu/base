@@ -1,10 +1,11 @@
 from dataclasses import dataclass, field, InitVar
-from typing import Iterable, Any
+from os import PathLike
+from typing import Iterable, Any, Union
 
 
 @dataclass(repr=True, eq=True, order=True, unsafe_hash=True, frozen=True)
 class ColumnInfo:
-    name: str = field(init=True, repr=True, hash=True, compare=False)
+    name: str = field(init=True, repr=True, hash=True, compare=True)
     index: int = field(init=True, repr=True, hash=True, compare=True)
 
 
@@ -82,6 +83,19 @@ class Table:
     @property
     def columns(self):
         return self.__meta
+
+    @classmethod
+    def load_csv(cls, file_path: Union[str, PathLike]) -> "Table":
+        from csv import reader
+
+        with open(file_path, "r") as csv_file:
+            lines = csv_file.readlines()
+
+        csv_reader = reader(lines)
+        columns = next(csv_reader)
+        result = Table(*columns)
+        result.load_sequence(csv_reader)
+        return result
 
     def load_sequence(self, input_sequence: Iterable[Iterable]):
         for item in input_sequence:

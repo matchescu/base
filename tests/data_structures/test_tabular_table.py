@@ -1,6 +1,9 @@
+import os
+
 import pytest
 
 from abstractions.data_structures import Table
+from data_structures import ColumnInfo
 
 
 def row_items():
@@ -30,3 +33,31 @@ def test_load_from_iterable(row):
     assert table[0]["authors"] == "the author"
     assert table[0]["venue"] == "a conference venue"
     assert table[0]["year"] == 1998
+
+
+def test_load_from_csv():
+    test_file_path = os.path.join(os.path.dirname(__file__), "test_data.csv")
+    result = Table.load_csv(test_file_path)
+
+    assert result.columns[0].name == "a"
+    assert result.columns[0].index == 0
+    assert result.columns[1].name == "b"
+    assert result.columns[1].index == 1
+    assert result[0]["a"] == "1"
+    assert result[0]["b"] == "2"
+
+
+def test_sub_table():
+    sut = Table("a", "b", "c")
+    sut.load_sequence([[1, 2, 3], [4, 5, 6]])
+
+    result = sut.sub_table("a", "c")
+
+    assert result.columns[0].name == "a"
+    assert result.columns[0].index == 0
+    assert result.columns[1].name == "c"
+    assert result.columns[1].index == 1
+    assert result[0][0] == 1
+    assert result[0][1] == 3
+    assert result[1][0] == 4
+    assert result[1][1] == 6
