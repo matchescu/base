@@ -111,3 +111,7 @@ class Table:
 
     def __getitem__(self, item):
         return self.__rows[item]
+
+    def __repr__(self):
+        col_str = ", ".join(map(lambda c: f"{c.index}:{c.name}", self.columns))
+        return f"Table[row_count={len(self.__rows)}]({col_str})"

@@ -1,6 +1,6 @@
 import pytest
 
-from abstractions.data_structures import ColumnInfo, Row, Table
+from src.abstractions.data_structures import ColumnInfo, Row
 
 
 def test_row_item_by_existing_name():

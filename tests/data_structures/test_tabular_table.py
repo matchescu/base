@@ -2,8 +2,7 @@ import os
 
 import pytest
 
-from abstractions.data_structures import Table
-from data_structures import ColumnInfo
+from src.abstractions.data_structures import Table
 
 
 def row_items():
