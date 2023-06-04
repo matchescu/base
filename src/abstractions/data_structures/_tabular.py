@@ -1,12 +1,9 @@
+import os
 from dataclasses import dataclass, field, InitVar
 from os import PathLike
 from typing import Iterable, Any, Union
 
-
-@dataclass(repr=True, eq=True, order=True, unsafe_hash=True, frozen=True)
-class ColumnInfo:
-    name: str = field(init=True, repr=True, hash=True, compare=True)
-    index: int = field(init=True, repr=True, hash=True, compare=True)
+from ._generic import FeatureInfo
 
 
 @dataclass(repr=True, eq=True, order=False, unsafe_hash=True)
@@ -14,12 +11,12 @@ class Row:
     _name_to_index_map: dict[str, int] = field(init=False, repr=False, compare=False, hash=False)
     _index_to_name_map: dict[int, str] = field(init=False, repr=False, compare=False, hash=False)
 
-    columns: InitVar[list[ColumnInfo]]
+    columns: InitVar[list[FeatureInfo]]
     values: list = field(default_factory=list, init=True, repr=True, compare=False, hash=True)
 
     def __post_init__(self, columns):
-        self._name_to_index_map = {col.name: col.index for col in columns}
-        self._index_to_name_map = {col.index: col.name for col in columns}
+        self._name_to_index_map = {col.name: col.ordinal for col in columns}
+        self._index_to_name_map = {col.ordinal: col.name for col in columns}
         self.__index = 0
 
     def __getitem__(self, item: str | int) -> Any:
@@ -46,7 +43,7 @@ class Row:
     def column_name(self, index: int) -> str:
         return self._index_to_name_map[index]
 
-    def sub_row(self, column_info: list[ColumnInfo]) -> "Row":
+    def sub_row(self, column_info: list[FeatureInfo]) -> "Row":
         return Row(
             column_info,
             [self[col.name] for col in column_info]
@@ -75,8 +72,8 @@ class Table:
     """Works for small datasets."""
 
     def __init__(self, *columns: str):
-        self.__meta: list[ColumnInfo] = [
-            ColumnInfo(name, index) for index, name in enumerate(columns)
+        self.__meta: list[FeatureInfo] = [
+            FeatureInfo(name, index) for index, name in enumerate(columns)
         ]
         self.__rows: list[Row] = []
 
@@ -97,6 +94,14 @@ class Table:
         result.load_sequence(csv_reader)
         return result
 
+    def save_csv(self, file_path: Union[str, PathLike]):
+        with open(file_path, "w") as file:
+            file.write(",".join(map(lambda x: x.name, self.columns)))
+            file.write(os.linesep)
+            for row in self.__rows:
+                file.write(",".join(row))
+                file.write(os.linesep)
+
     def load_sequence(self, input_sequence: Iterable[Iterable]):
         for item in input_sequence:
             self.__rows.append(Row(self.__meta, list(val for val in item)))
@@ -112,6 +117,9 @@ class Table:
     def __getitem__(self, item):
         return self.__rows[item]
 
+    def __len__(self):
+        return len(self.__rows)
+
     def __repr__(self):
-        col_str = ", ".join(map(lambda c: f"{c.index}:{c.name}", self.columns))
+        col_str = ", ".join(map(lambda c: f"{c.ordinal}:{c.name}", self.columns))
         return f"Table[row_count={len(self.__rows)}]({col_str})"

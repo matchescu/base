@@ -39,9 +39,9 @@ def test_load_from_csv():
     result = Table.load_csv(test_file_path)
 
     assert result.columns[0].name == "a"
-    assert result.columns[0].index == 0
+    assert result.columns[0].ordinal == 0
     assert result.columns[1].name == "b"
-    assert result.columns[1].index == 1
+    assert result.columns[1].ordinal == 1
     assert result[0]["a"] == "1"
     assert result[0]["b"] == "2"
 
@@ -53,9 +53,9 @@ def test_sub_table():
     result = sut.sub_table("a", "c")
 
     assert result.columns[0].name == "a"
-    assert result.columns[0].index == 0
+    assert result.columns[0].ordinal == 0
     assert result.columns[1].name == "c"
-    assert result.columns[1].index == 1
+    assert result.columns[1].ordinal == 1
     assert result[0][0] == 1
     assert result[0][1] == 3
     assert result[1][0] == 4

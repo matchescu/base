@@ -1,16 +1,16 @@
 import pytest
 
-from src.abstractions.data_structures import ColumnInfo, Row
+from abstractions.data_structures import FeatureInfo, Row
 
 
 def test_row_item_by_existing_name():
-    row = Row([ColumnInfo("a", 0)], ["expected"])
+    row = Row([FeatureInfo("a", 0)], ["expected"])
 
     assert row["a"] == "expected"
 
 
 def test_row_item_by_non_existent_name():
-    row = Row([ColumnInfo("a", 0)], ["expected"])
+    row = Row([FeatureInfo("a", 0)], ["expected"])
 
     with pytest.raises(ValueError) as err_proxy:
         assert row["b"]
@@ -19,7 +19,7 @@ def test_row_item_by_non_existent_name():
 
 
 def test_row_item_by_misconfigured_name():
-    row = Row([ColumnInfo("a", 1)], ["expected"])
+    row = Row([FeatureInfo("a", 1)], ["expected"])
 
     with pytest.raises(ValueError) as err_proxy:
         assert row["a"]
@@ -61,7 +61,7 @@ def test_row_dehydrated_iterator():
 
 
 def test_row_set_item_by_name():
-    row = Row([ColumnInfo("a", 0)], [0])
+    row = Row([FeatureInfo("a", 0)], [0])
 
     row["a"] = 1
 
@@ -69,7 +69,7 @@ def test_row_set_item_by_name():
 
 
 def test_row_set_item_by_unknown_name():
-    row = Row([ColumnInfo("a", 0)], [0])
+    row = Row([FeatureInfo("a", 0)], [0])
 
     with pytest.raises(ValueError) as err_proxy:
         row["b"] = 1
@@ -78,7 +78,7 @@ def test_row_set_item_by_unknown_name():
 
 
 def test_row_set_item_by_misconfigured_name():
-    row = Row([ColumnInfo("a", 1)], [0])
+    row = Row([FeatureInfo("a", 1)], [0])
 
     with pytest.raises(ValueError) as err_proxy:
         row["a"] = 1
@@ -87,7 +87,7 @@ def test_row_set_item_by_misconfigured_name():
 
 
 def test_row_set_item_by_index():
-    row = Row([ColumnInfo("a", 0)], [0])
+    row = Row([FeatureInfo("a", 0)], [0])
 
     row[0] = 1
 
