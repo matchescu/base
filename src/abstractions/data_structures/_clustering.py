@@ -18,3 +18,6 @@ class Clustering:
                 for i in range(min(map(len, tables)))
             ]
         )
+
+    def __len__(self):
+        return len(self.clustered_rows)
