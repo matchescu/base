@@ -1,3 +1,4 @@
+import csv
 import os
 from dataclasses import dataclass, field, InitVar
 from os import PathLike
@@ -96,11 +97,9 @@ class Table:
 
     def save_csv(self, file_path: Union[str, PathLike]):
         with open(file_path, "w") as file:
-            file.write(",".join(map(lambda x: x.name, self.columns)))
-            file.write(os.linesep)
-            for row in self.__rows:
-                file.write(",".join(row))
-                file.write(os.linesep)
+            writer = csv.writer(file)
+            writer.writerow(map(lambda x: x.name, self.columns))
+            writer.writerows(self.__rows)
 
     def load_sequence(self, input_sequence: Iterable[Iterable]):
         for item in input_sequence:
