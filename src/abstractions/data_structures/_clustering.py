@@ -19,5 +19,17 @@ class Clustering:
             ]
         )
 
+    @classmethod
+    def from_nested_lists(cls, input_data: list[list[list]]) -> "Clustering":
+        return Clustering(
+            feature_info=[],
+            clustered_rows=[
+                tuple(
+                    tuple(cluster) for cluster in row
+                )
+                for row in input_data
+            ]
+        )
+
     def __len__(self):
         return len(self.clustered_rows)
