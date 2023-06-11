@@ -1,4 +1,4 @@
-from ._sized_iterable import SizedIterable
+from ._iterables import IndexedIterable
 
 
-__all__ = ["SizedIterable"]
+__all__ = ["IndexedIterable"]
