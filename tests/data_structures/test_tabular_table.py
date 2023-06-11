@@ -34,6 +34,17 @@ def test_load_from_iterable(row):
     assert table[0]["year"] == 1998
 
 
+def test_load_from_iterable_no_feature_info(row):
+    table = Table()
+
+    table.load_sequence(row)
+
+    assert table[0]["column-00001"] == 1362
+    assert table[0]["column-00002"] == "amazing book"
+    assert table[0]["column-00003"] == "the author"
+    assert table[0]["column-00004"] == "a conference venue"
+    assert table[0]["column-00005"] == 1998
+
 def test_load_from_csv():
     test_file_path = os.path.join(os.path.dirname(__file__), "test_data.csv")
     result = Table.load_csv(test_file_path)

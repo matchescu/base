@@ -82,17 +82,25 @@ class Table:
     def columns(self):
         return self.__meta
 
+    @property
+    def column_count(self):
+        return len(self.__meta)
+
     @classmethod
-    def load_csv(cls, file_path: Union[str, PathLike]) -> "Table":
+    def load_csv(cls, file_path: Union[str, PathLike], header: bool = True) -> "Table":
         from csv import reader
 
         with open(file_path, "r") as csv_file:
             lines = csv_file.readlines()
 
         csv_reader = reader(lines)
-        columns = next(csv_reader)
+        if header:
+            columns = next(csv_reader)
+        else:
+            columns = []
         result = Table(*columns)
         result.load_sequence(csv_reader)
+
         return result
 
     def save_csv(self, file_path: Union[str, PathLike]):
@@ -103,7 +111,10 @@ class Table:
 
     def load_sequence(self, input_sequence: Iterable[Iterable]):
         for item in input_sequence:
-            self.__rows.append(Row(self.__meta, list(val for val in item)))
+            row_values = list(val for val in item)
+            if len(self.__meta) < 1:
+                self.__meta = [FeatureInfo(f"column-{idx+1:05}", idx) for idx in range(len(row_values))]
+            self.__rows.append(Row(self.__meta, row_values))
 
     def sub_table(self, *cols: str) -> "Table":
         result = Table(*cols)
