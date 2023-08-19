@@ -1,4 +1,4 @@
-from typing import Sized, Iterable, Protocol, Union, Any, Collection
+from typing import Sized, Iterable, Protocol, Union, Any
 
 
 class Record(Sized, Iterable, Protocol):
