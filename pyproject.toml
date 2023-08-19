@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "abstractions"
+name = "matchescu-abstractions"
 version = "0.1.0"
 description = ""
 authors = ["Andrei Olar <andrei.olar@dpgmedia.nl>"]
 readme = "README.md"
+packages = [{include="matchescu", from="src"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
-
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.1"
