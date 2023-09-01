@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "matchescu-abstractions"
+name = "matchescu-base"
 version = "0.1.0"
 description = ""
-authors = ["Andrei Olar <andrei.olar@dpgmedia.nl>"]
+authors = ["Andrei Olar <andrei.olar@ubbcluj.ro>"]
 readme = "README.md"
 packages = [{include="matchescu", from="src"}]
 

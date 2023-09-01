@@ -1,0 +1,16 @@
+ 0. Initialize r = 0; for i = 1 to n eq(ai) = {i}; neq(ai) = ∅;
+ 1. Repeat
+ 2.   r = r + 1
+ 3.   for i = 1 to n
+ 4.     find the next j if any, starting from i + 1, wrapped around after n
+ 5.         if necessary, such that j /∈ eq(ai) ∪ neq(ai).
+ 6.     if such a j is found then
+ 7.     if ai = aj then
+ 8.         for all x ∈ eq(ai) ∪ eq(aj ),
+ 9.             eq(ax) ← eq(ai) ∪ eq(aj) and
+10.             neq(ax) ← neq(ai) ∪ neq(aj)
+11.     else if ai != aj then
+12.         for all x ∈ eq(ai), neq(ax) ← neq(ax) ∪ eq(aj) and
+13.         for all y ∈ eq(aj), neq(ay) ← neq(ay) ∪ eq(ai)
+14.   endfor
+15. until there exists an element i such that |eq(ai)| ≥ (n − 1)/r
