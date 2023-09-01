@@ -23,8 +23,6 @@ $ poetry run pytest
 
 ## Activate virtual environment
 
-First, set up your dev environment.
-
 ```shell
 $ poetry shell
 ```
