@@ -35,5 +35,5 @@ def compute_partition(a: list, equivalence: set[tuple]):
         max_class_len = max(map(len, (eq[a[i]] for i in range(n))))
 
     # convert to frozen sets
-    return {frozenset(eq[key]) for key in eq}
+    return {frozenset(map(lambda idx: a[idx], eq[key])) for key in eq}
 

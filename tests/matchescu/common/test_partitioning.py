@@ -1,26 +1,26 @@
-import pytest
-
 from matchescu.common.partitioning import compute_partition
 
 
-@pytest.fixture
-def transitive_equivalence():
-    return {
-        ("a", "b"),
-        ("b", "c"),
-        ("d", "d"),
-    }
+def test_reflexivity():
+    partition = compute_partition(["a"], {("a", "a")})
+    assert len(partition) == 1
+    assert partition.pop() == frozenset(["a"])
 
 
-def test_partitioning_transitivity(transitive_equivalence):
+def test_symmetry():
+    partition = compute_partition(["a", "b"], {("a", "b"), ("b", "a")})
+    assert len(partition) == 1
+    assert partition.pop() == frozenset(["a", "b"])
+
+
+def test_transitivity():
     partition = compute_partition(
-        ["a", "b", "c", "d"],
-        transitive_equivalence
+        ["a", "b", "c"],
+        {
+            ("a", "b"),
+            ("b", "c"),
+        }
     )
 
-    assert len(partition) == 2
-    a1_class = list(filter(lambda x: len(x) == 3, partition))
-    assert len(a1_class) == 1
-    assert a1_class == [{("a1",), ("a2",), ("a3",)}]
-    a4_class = list(filter(lambda x: len(x) == 1, partition))
-    assert a4_class == [{("a4",)}]
+    assert len(partition) == 1
+    assert partition.pop() == frozenset(["a", "b", "c"])
