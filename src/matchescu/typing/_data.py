@@ -10,5 +10,5 @@ class Record(Sized, Iterable, Protocol):
     may be accessed by its name or by its location.
     """
 
-    def __getitem__(self, item: Union[str, int, slice]) -> Any:
-        pass
+    def __getitem__(self, item: Union[str, int]) -> Any:
+        """Record values may be accessed by name or index."""
