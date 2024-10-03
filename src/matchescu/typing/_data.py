@@ -1,5 +1,7 @@
 from typing import Sized, Iterable, Protocol, Union, Any, TypeVar
 
+from matchescu.typing._callable import Trait
+
 
 T = TypeVar("T")
 
@@ -26,6 +28,9 @@ class DataSource(Iterable[T], Sized, Protocol):
     Attributes
     ----------
     :name str: name of the data source
+    :traits Iterable[Trait]: feature extraction traits that are specific to the
+        data source.
     """
 
     name: str
+    traits: Iterable[Trait]

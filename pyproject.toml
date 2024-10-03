@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "matchescu-base"
-version = "0.4.1"
+version = "0.5.0"
 description = ""
 authors = ["Andrei Olar <andrei.olar@ubbcluj.ro>"]
 readme = "README.md"
