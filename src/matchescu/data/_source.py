@@ -1,8 +1,11 @@
 from abc import ABCMeta, abstractmethod
-from matchescu.typing import Record
+from typing import TypeVar, Generic
 
 
-class DataSource(metaclass=ABCMeta):
+T = TypeVar("T")
+
+
+class DataSource(Generic[T], metaclass=ABCMeta):
     def __iter__(self):
         return self
 
@@ -11,9 +14,9 @@ class DataSource(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def __next__(self) -> Record:
+    def __next__(self) -> T:
         pass
 
     @abstractmethod
-    def __getitem__(self, index: int) -> Record:
+    def __getitem__(self, index: int) -> T:
         pass
