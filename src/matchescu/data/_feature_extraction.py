@@ -1,10 +1,8 @@
-from typing import Callable, Iterable
+from typing import Iterable
 
-from matchescu.typing import Record, EntityProfile, EntityReference
+from matchescu.typing import Record, EntityReference
 from matchescu.data._source import DataSource
-
-
-Trait = Callable[[Record], tuple]
+from matchescu.typing._callable import Trait
 
 
 class EntityReferenceExtractor:

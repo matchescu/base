@@ -1,17 +1,7 @@
-from typing import Protocol, Any
+from typing import Any, Callable
 
+from matchescu.typing._data import Record
 from matchescu.typing._entity_resolution import EntityReference
 
-
-class EntityReferenceIdentifier(Protocol):
-    """Get the identifying information from an entity reference."""
-
-    def __call__(self, ref: EntityReference) -> Any:
-        """Retrieves the information that makes ref unique in a context.
-
-        :param ref: an entity reference constructed from a data source
-
-        :return: the information that identifies the entity reference within
-        the data extraction process.
-        """
-        pass
+Trait = Callable[[Record], tuple]
+EntityReferenceIdentifier = Callable[[EntityReference], Any]
