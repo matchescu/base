@@ -19,7 +19,7 @@ def test_transitivity():
         [
             ("a", "b"),
             ("b", "c"),
-        ]
+        ],
     )
 
     assert len(partition) == 1
@@ -28,12 +28,7 @@ def test_transitivity():
 
 def test_create_single_set():
     partition = compute_partition(
-        ["a", "b", "c", "d"],
-        [
-            ("a", "b"),
-            ("b", "c"),
-            ("d", "a")
-        ]
+        ["a", "b", "c", "d"], [("a", "b"), ("b", "c"), ("d", "a")]
     )
 
     assert len(partition) == 1
@@ -46,7 +41,7 @@ def test_isolated_item():
         [
             ("a", "b"),
             ("b", "c"),
-        ]
+        ],
     )
     assert len(partition) == 2
     assert partition == [["a", "b", "c"], ["d"]]
