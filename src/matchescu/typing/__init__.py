@@ -1,12 +1,12 @@
-from matchescu.typing._callable import EntityReferenceIdentifier, Trait
+from matchescu.typing._callable import Trait
 from matchescu.typing._data import Record, DataSource
-from matchescu.typing._entity_resolution import EntityReference, EntityProfile
+from matchescu.typing._entity_resolution import EntityReference, EntityReferenceIdFactory, EntityProfile
 
 
 __all__ = [
     "DataSource",
     "EntityReference",
-    "EntityReferenceIdentifier",
+    "EntityReferenceIdFactory",
     "EntityProfile",
     "Record",
     "Trait",

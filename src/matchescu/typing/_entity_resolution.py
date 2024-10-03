@@ -1,4 +1,4 @@
-from typing import Hashable, Iterable, Sized, Protocol
+from typing import Hashable, Iterable, Sized, Protocol, Callable
 
 from matchescu.typing._data import Record
 
@@ -16,3 +16,6 @@ class EntityProfile(Iterable[EntityReference], Sized, Protocol):
     * **entity matching**: pairs of entity references
     * **algebraic model**: a non-empty set of entity references
     """
+
+
+EntityReferenceIdFactory = Callable[[EntityReference], Hashable]

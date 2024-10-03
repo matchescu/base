@@ -1,16 +1,17 @@
-from typing import Generic, Generator
+from typing import Generic, Generator, Hashable, Iterable
 
 from matchescu.typing import EntityReference
 from matchescu.typing._data import T, DataSource
-from matchescu.typing._callable import Trait
+from matchescu.typing._entity_resolution import EntityReferenceIdFactory
 
 
-class EntityReferenceExtractor(Generic[T]):
-    def __init__(self, traits: list[Trait]):
-        self.__traits = traits
+class EntityReferenceExtraction(Generic[T]):
+    def __init__(self, ds: DataSource[T], id_factory: EntityReferenceIdFactory):
+        self.__ds = ds
+        self.__id_factory = id_factory
 
     def __process_traits(self, item: T) -> Generator[tuple, None, None]:
-        for trait in self.__traits:
+        for trait in self.__ds.traits:
             trait_result = trait(item)
             if trait_result is None:
                 continue
@@ -26,5 +27,8 @@ class EntityReferenceExtractor(Generic[T]):
             for value in trait_result
         )
 
-    def __call__(self, ds: DataSource[T]) -> Generator[EntityReference, None, None]:
-        yield from map(self.__extract_entity_reference, ds)
+    def entity_ids(self) -> Iterable[Hashable]:
+        return map(self.__id_factory, self.__ds)
+
+    def __call__(self) -> Iterable[EntityReference]:
+        return map(self.__extract_entity_reference, self.__ds)
