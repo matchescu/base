@@ -1,4 +1,7 @@
-from typing import Sized, Iterable, Protocol, Union, Any
+from typing import Sized, Iterable, Protocol, Union, Any, TypeVar
+
+
+T = TypeVar("T")
 
 
 class Record(Sized, Iterable, Protocol):
@@ -12,3 +15,17 @@ class Record(Sized, Iterable, Protocol):
 
     def __getitem__(self, item: Union[str, int]) -> Any:
         """Record values may be accessed by name or index."""
+
+
+class DataSource(Iterable[T], Sized, Protocol):
+    """A data source is an iterable sequence of relatively similar items.
+
+    Data sources have a size or at least can estimate their own size. Each data
+    source has a name.
+
+    Attributes
+    ----------
+    :name str: name of the data source
+    """
+
+    name: str
