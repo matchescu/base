@@ -9,5 +9,6 @@ class Record(Sized, Iterable, Protocol):
     iterated over so that we can browse all of its attributes and each attribute
     may be accessed by its name or by its location.
     """
-    def __getitem__(self, item: Union[str, int]) -> Any:
+
+    def __getitem__(self, item: Union[str, int, slice]) -> Any:
         pass

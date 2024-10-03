@@ -41,12 +41,12 @@ class EquivalenceClassPartitioner(Generic[T]):
         abc = dict()
         for item in self._items:
             classes[self._find(item)][item] = None
-        return [
-            list(eq_class) for eq_class in classes.values() if len(eq_class) > 0
-        ]
+        return [list(eq_class) for eq_class in classes.values() if len(eq_class) > 0]
 
 
-def compute_partition(all_references: list, equivalence: list[tuple]) -> list[list[tuple]]:
+def compute_partition(
+    all_references: list, equivalence: list[tuple]
+) -> list[list[tuple]]:
     """Partition an input set according to an equivalence relation.
 
     The algorithm uses the Union-Find or DFU data structure.

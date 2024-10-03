@@ -1,14 +1,13 @@
-from abc import ABCMeta
 from typing import Hashable, Iterable, Sized, Protocol
 
 from matchescu.typing._data import Record
 
 
-class EntityReference(Hashable, Record):
+class EntityReference(Hashable, Record, Protocol):
     pass
 
 
-class EntityProfile(Iterable[EntityReference], Sized, metaclass=ABCMeta):
+class EntityProfile(Iterable[EntityReference], Sized, Protocol):
     """An entity profile is a collection of entity references.
 
     There are particularities of entity profiles depending on the entity
