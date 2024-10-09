@@ -27,8 +27,8 @@ class EntityReferenceExtraction(Generic[T]):
             for value in trait_result
         )
 
-    def entity_ids(self) -> Iterable[Hashable]:
-        return map(self.__id_factory, self.__ds)
+    def identify(self, ref: EntityReference) -> Hashable:
+        return self.__id_factory(ref)
 
     def __call__(self) -> Iterable[EntityReference]:
         return map(self.__extract_entity_reference, self.__ds)

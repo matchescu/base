@@ -86,8 +86,8 @@ def test_extraction_calls_id_factory():
     id_factory_mock = MagicMock(name="id_factory", return_value=expected)
     extract = EntityReferenceExtraction(source, id_factory_mock)
 
-    hashable = next(iter(extract.entity_ids()))
+    hashable = extract.identify((0,))
 
     assert id_factory_mock.call_count == 1
-    assert id_factory_mock.call_args_list == [call(0)]
+    assert id_factory_mock.call_args_list == [call((0,))]
     assert hashable == expected
