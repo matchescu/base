@@ -30,5 +30,9 @@ class EntityReferenceExtraction(Generic[T]):
     def identify(self, ref: EntityReference) -> Hashable:
         return self.__id_factory(ref)
 
+    @property
+    def source_name(self):
+        return self.__ds.name
+
     def __call__(self) -> Iterable[EntityReference]:
         return map(self.__extract_entity_reference, self.__ds)
