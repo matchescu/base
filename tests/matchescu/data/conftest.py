@@ -22,7 +22,7 @@ class DataSourceStub(list[int]):
 @pytest.fixture
 def entity_reference(data_source) -> EntityReference:
     mock = MagicMock(name="EntityReferenceMock", spec=EntityReference)
-    mock.id = EntityReferenceIdentifier(label=1, data_source=data_source.name)
+    mock.id = EntityReferenceIdentifier(label=1, source=data_source.name)
     return cast(EntityReference, mock)
 
 

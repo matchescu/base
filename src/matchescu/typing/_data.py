@@ -1,5 +1,5 @@
 from collections.abc import Sequence, Iterable
-from typing import Sized, Protocol, Union, Any, TypeVar, Callable
+from typing import Sized, Protocol, Union, Any, TypeVar, Callable, Generator
 
 
 class Record(Sized, Iterable, Protocol):
@@ -10,28 +10,27 @@ class Record(Sized, Iterable, Protocol):
     attributes and each attribute may be accessed using a name or an integer
     index.
     """
-
-    data_source: str
-
     def __getitem__(self, item: Union[str, int]) -> Any:
         """Record values may be accessed by name or index."""
 
 
+# type variable for generic types that use records
 TRecord = TypeVar("TRecord", bound=Record)
 
+# traits take in one or more records and return a single record
 Trait = Callable[[Iterable[TRecord]], TRecord]
 
 
 class DataSource(Iterable[TRecord], Sized, Protocol):
     """A data source is an iterable sequence of relatively similar items.
 
-    Data sources have a size or at least can estimate their own size. Each data
-    source has a name.
+    Data sources have a size or can at least estimate it. Each data source has a
+    name.
 
     Attributes
     ----------
     :name str: name of the data source
-    :traits Iterable[Trait]: feature extraction traits that are specific to the
+    :traits Sequence[Trait]: entity reference extraction traits specific to this
         data source.
     """
 
@@ -39,4 +38,5 @@ class DataSource(Iterable[TRecord], Sized, Protocol):
     traits: Sequence[Trait]
 
 
-RecordSampler = Callable[[DataSource], Iterable[TRecord]]
+# Record samplers retrieve a finite number of records at a time from a data source.
+RecordSampler = Callable[[DataSource], Generator[list[TRecord], None, None]]

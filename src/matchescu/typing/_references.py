@@ -6,22 +6,31 @@ from matchescu.typing._data import Record
 
 @dataclass
 class EntityReferenceIdentifier:
+    """Identifies an entity reference.
+
+    Attributes:
+        :label Hashable: unique label identifying an entity reference within a collection
+        :source str: a string describing where the entity reference originated
+    """
     label: Hashable
-    data_source: str
+    source: str
 
 
 class EntityReference(Record, Protocol):
+    """An entity reference instance allows accessing data by name or index.
+
+    Attributes:
+        :id EntityReferenceIdentifier: identifies the entity reference
+    """
     id: EntityReferenceIdentifier
 
 
 class EntityProfile(Iterable[EntityReference], Sized, Protocol):
-    """An entity profile is a collection of entity references.
+    """Entity profiles are iterable sequences of a finite number of entity
+    references.
 
-    There are particularities of entity profiles depending on the entity
-    resolution model being used:
-
-    * **entity matching**: pairs of entity references
-    * **algebraic model**: a non-empty set of entity references
+    Concrete entity profiles have different representations according to the
+    entity resolution model being used.
     """
 
 
