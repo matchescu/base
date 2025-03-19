@@ -1,9 +1,5 @@
-from typing import Sized, Iterable, Protocol, Union, Any, TypeVar
-
-from matchescu.typing._callable import Trait
-
-
-T = TypeVar("T")
+from collections.abc import Sequence, Iterable
+from typing import Sized, Protocol, Union, Any, TypeVar, Callable
 
 
 class Record(Sized, Iterable, Protocol):
@@ -15,11 +11,18 @@ class Record(Sized, Iterable, Protocol):
     index.
     """
 
+    data_source: str
+
     def __getitem__(self, item: Union[str, int]) -> Any:
         """Record values may be accessed by name or index."""
 
 
-class DataSource(Iterable[T], Sized, Protocol):
+TRecord = TypeVar("TRecord", bound=Record)
+
+Trait = Callable[[Iterable[TRecord]], TRecord]
+
+
+class DataSource(Iterable[TRecord], Sized, Protocol):
     """A data source is an iterable sequence of relatively similar items.
 
     Data sources have a size or at least can estimate their own size. Each data
@@ -33,4 +36,7 @@ class DataSource(Iterable[T], Sized, Protocol):
     """
 
     name: str
-    traits: Iterable[Trait]
+    traits: Sequence[Trait]
+
+
+RecordSampler = Callable[[DataSource], Iterable[TRecord]]

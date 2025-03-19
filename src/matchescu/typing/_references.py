@@ -1,10 +1,17 @@
+from dataclasses import dataclass
 from typing import Hashable, Iterable, Sized, Protocol, Callable
 
 from matchescu.typing._data import Record
 
 
-class EntityReference(Hashable, Record, Protocol):
-    pass
+@dataclass
+class EntityReferenceIdentifier:
+    label: Hashable
+    data_source: str
+
+
+class EntityReference(Record, Protocol):
+    id: EntityReferenceIdentifier
 
 
 class EntityProfile(Iterable[EntityReference], Sized, Protocol):
@@ -18,4 +25,5 @@ class EntityProfile(Iterable[EntityReference], Sized, Protocol):
     """
 
 
-EntityReferenceIdFactory = Callable[[EntityReference], Hashable]
+EntityReferenceIdFactory = Callable[[Record], EntityReferenceIdentifier]
+RecordAdapter = Callable[[Record], EntityReference]
