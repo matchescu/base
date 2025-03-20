@@ -4,7 +4,7 @@ from typing import Hashable, Iterable, Sized, Protocol, Callable
 from matchescu.typing._data import Record
 
 
-@dataclass
+@dataclass(frozen=True, eq=True)
 class EntityReferenceIdentifier:
     """Identifies an entity reference.
 
