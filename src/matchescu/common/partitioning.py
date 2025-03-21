@@ -38,7 +38,6 @@ class EquivalenceClassPartitioner(Generic[T]):
         for x, y in pairs:
             self._union(x, y)
         classes = {item: dict() for item in self._items}
-        abc = dict()
         for item in self._items:
             classes[self._find(item)][item] = None
         return [list(eq_class) for eq_class in classes.values() if len(eq_class) > 0]

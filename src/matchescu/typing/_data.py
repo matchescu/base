@@ -10,6 +10,7 @@ class Record(Sized, Iterable, Protocol):
     attributes and each attribute may be accessed using a name or an integer
     index.
     """
+
     def __getitem__(self, item: Union[str, int]) -> Any:
         """Record values may be accessed by name or index."""
 

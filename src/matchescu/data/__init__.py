@@ -1,4 +1,4 @@
-from matchescu.data._extraction import EntityReferenceExtraction
+from matchescu.data._record import Record
 
 
-__all__ = ["EntityReferenceExtraction"]
+__all__ = ["Record"]

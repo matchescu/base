@@ -18,4 +18,5 @@ __all__ = [
     "RecordSampler",
     "RecordAdapter",
     "Trait",
+    "TRecord",
 ]

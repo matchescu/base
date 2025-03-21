@@ -12,6 +12,7 @@ class EntityReferenceIdentifier:
         :label Hashable: unique label identifying an entity reference within a collection
         :source str: a string describing where the entity reference originated
     """
+
     label: Hashable
     source: str
 
@@ -22,6 +23,7 @@ class EntityReference(Record, Protocol):
     Attributes:
         :id EntityReferenceIdentifier: identifies the entity reference
     """
+
     id: EntityReferenceIdentifier
 
 
