@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Hashable, Iterable, Sized, Protocol, Callable
+from typing import Hashable, Iterable, Sized, Protocol, Callable, Any
 
 from matchescu.typing._data import Record
 
@@ -25,6 +25,10 @@ class EntityReference(Record, Protocol):
     """
 
     id: EntityReferenceIdentifier
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return a dictionary containing the reference's attribute names and values."""
+        pass
 
 
 class EntityProfile(Iterable[EntityReference], Sized, Protocol):

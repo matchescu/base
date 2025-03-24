@@ -13,10 +13,6 @@ class Record:
             self.__attr_names = {x[0]: i for i, x in enumerate(tuples)}
 
     @staticmethod
-    def __get_attr_key(key: str | int) -> str:
-        return f"column_{key}" if isinstance(key, int) else key
-
-    @staticmethod
     def merge(records: Iterable["Record"]) -> "Record":
         merge_record = {}
         for record in records:
@@ -24,6 +20,10 @@ class Record:
                 {k: record.__values[i] for k, i in record.__attr_names.items()}
             )
         return Record(merge_record)
+
+    @staticmethod
+    def __get_attr_key(key: str | int) -> str:
+        return f"column_{key}" if isinstance(key, int) else key
 
     def __init_data(self, value: Iterable) -> Iterable[tuple]:
         if isinstance(value, dict):
