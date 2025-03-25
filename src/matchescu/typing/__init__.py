@@ -4,7 +4,6 @@ from matchescu.typing._references import (
     EntityReference,
     EntityReferenceIdFactory,
     EntityProfile,
-    RecordAdapter,
 )
 
 
@@ -16,7 +15,6 @@ __all__ = [
     "EntityProfile",
     "Record",
     "RecordSampler",
-    "RecordAdapter",
     "Trait",
     "TRecord",
 ]
