@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "matchescu-base"
-version = "0.14.0"
+version = "0.15.0"
 description = "Base abstract data types for Entity Resolution"
 authors = ["Andrei Olar <andrei.olar@ubbcluj.ro>"]
 readme = "README.md"
