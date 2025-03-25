@@ -40,5 +40,4 @@ class EntityProfile(Iterable[EntityReference], Sized, Protocol):
     """
 
 
-EntityReferenceIdFactory = Callable[[Record], EntityReferenceIdentifier]
-RecordAdapter = Callable[[Record], EntityReference]
+EntityReferenceIdFactory = Callable[[Iterable[Record]], EntityReferenceIdentifier]
