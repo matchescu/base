@@ -16,6 +16,12 @@ class EntityReferenceIdentifier:
     label: Hashable
     source: str
 
+    def __repr__(self) -> str:
+        return f"ref_id{{{self.source},{repr(self.label)}}}"
+
+    def __str__(self) -> str:
+        return f"{self.source}({str(self.label)})"
+
 
 class EntityReference(Record, Protocol):
     """An entity reference instance allows accessing data by name or index.
