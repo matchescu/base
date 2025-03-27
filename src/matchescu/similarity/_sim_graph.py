@@ -1,12 +1,12 @@
 import itertools
 from enum import StrEnum
 from functools import partial
-from typing import Generator
+from typing import Generator, Generic
 
 import networkx as nx
 
-from matchescu.similarity._matcher import Matcher
-from matchescu.typing._references import EntityReference
+from matchescu.similarity._matcher import Matcher, TRef
+from matchescu.typing._references import EntityReferenceIdentifier
 
 
 class MatchEdgeType(StrEnum):
@@ -14,9 +14,9 @@ class MatchEdgeType(StrEnum):
     POTENTIAL_MATCH = "potential_match"
 
 
-class SimilarityGraph:
+class SimilarityGraph(Generic[TRef]):
     def __init__(
-        self, matcher: Matcher, max_non_match: float, min_match: float
+        self, matcher: Matcher[TRef], max_non_match: float, min_match: float
     ) -> None:
         self.__g = nx.DiGraph()
         self.__matcher = matcher
@@ -57,20 +57,31 @@ class SimilarityGraph:
     def non_match_count(self):
         return self.__non_match_count
 
-    def add(self, left: EntityReference, right: EntityReference) -> "SimilarityGraph":
-        """Adds an edge between two entities based on similarity thresholds."""
+    def add(self, left: TRef, right: TRef) -> "SimilarityGraph":
+        """Add an edge between two entity references.
+
+        The edge is added based on the configured similarity thresholds based
+        on the similarity computed by the configured matcher.
+
+        :param left: left entity reference
+        :param right: right entity reference
+
+        :return: ``self``, with the added edge.
+        """
         if left not in self.__g:
-            self.__g.add_node(left)
+            self.__g.add_node(left.id)
         if right not in self.__g:
-            self.__g.add_node(right)
+            self.__g.add_node(right.id)
 
         sim_score = self.__matcher(left, right)
         if sim_score >= self.__min_good:
-            self.__g.add_edge(left, right, weight=sim_score, type=MatchEdgeType.MATCH)
+            self.__g.add_edge(
+                left.id, right.id, weight=sim_score, type=MatchEdgeType.MATCH
+            )
             self.__match_count += 1
         elif self.__max_bad <= sim_score < self.__min_good:
             self.__g.add_edge(
-                left, right, weight=sim_score, type=MatchEdgeType.POTENTIAL_MATCH
+                left.id, right.id, weight=sim_score, type=MatchEdgeType.POTENTIAL_MATCH
             )
             self.__potential_match_count += 1
         else:
@@ -84,27 +95,47 @@ class SimilarityGraph:
 
     def edges_by_type(
         self, edge_type: MatchEdgeType
-    ) -> Generator[tuple[EntityReference, EntityReference], None, None]:
+    ) -> Generator[
+        tuple[EntityReferenceIdentifier, EntityReferenceIdentifier], None, None
+    ]:
         yield from itertools.starmap(
             lambda a, b, _: (a, b),
             filter(partial(self.__has_expected_type, edge_type=edge_type), self.edges),
         )
 
-    def matches(self) -> Generator[tuple[EntityReference, EntityReference], None, None]:
+    def matches(
+        self,
+    ) -> Generator[
+        tuple[EntityReferenceIdentifier, EntityReferenceIdentifier], None, None
+    ]:
         yield from self.edges_by_type(MatchEdgeType.MATCH)
 
     def potential_matches(
         self,
-    ) -> Generator[tuple[EntityReference, EntityReference], None, None]:
+    ) -> Generator[
+        tuple[EntityReferenceIdentifier, EntityReferenceIdentifier], None, None
+    ]:
         yield from self.edges_by_type(MatchEdgeType.POTENTIAL_MATCH)
 
-    def is_match(self, left: EntityReference, right: EntityReference) -> bool:
+    def is_match(
+        self, left: EntityReferenceIdentifier, right: EntityReferenceIdentifier
+    ) -> bool:
         data = self.__g.get_edge_data(left, right, default={})
         return data.get("type") == MatchEdgeType.MATCH
 
-    def is_potential_match(self, left: EntityReference, right: EntityReference) -> bool:
+    def is_potential_match(
+        self, left: EntityReferenceIdentifier, right: EntityReferenceIdentifier
+    ) -> bool:
         data = self.__g.get_edge_data(left, right, default={})
         return data.get("type") == MatchEdgeType.POTENTIAL_MATCH
 
-    def is_non_match(self, left: EntityReference, right: EntityReference) -> bool:
+    def is_non_match(
+        self, left: EntityReferenceIdentifier, right: EntityReferenceIdentifier
+    ) -> bool:
         return (left, right) not in self.__g.edges
+
+    def weight(
+        self, left: EntityReferenceIdentifier, right: EntityReferenceIdentifier
+    ) -> float:
+        data = self.__g.get_edge_data(left, right, default={})
+        return float(data.get("weight", 0.0))
