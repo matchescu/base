@@ -74,7 +74,7 @@ def test_filter_by_edge_type(comparison_space, sim_graph, mock_similarity, edge_
 
     actual = list(sim_graph.edges_by_type(edge_type))
 
-    assert actual == list(comparison_space)
+    assert actual == list((x.id, y.id) for x, y in comparison_space)
 
 
 def test_is_match(comparison_space, sim_graph, mock_similarity):
@@ -82,8 +82,8 @@ def test_is_match(comparison_space, sim_graph, mock_similarity):
     for a, b in comparison_space:
         sim_graph.add(a, b)
 
-    assert all(sim_graph.is_match(a, b) for a, b in comparison_space)
-    assert all(not sim_graph.is_non_match(a, b) for a, b in comparison_space)
+    assert all(sim_graph.is_match(a.id, b.id) for a, b in comparison_space)
+    assert all(not sim_graph.is_non_match(a.id, b.id) for a, b in comparison_space)
 
 
 def test_is_potential_match(comparison_space, sim_graph, mock_similarity):
@@ -91,8 +91,8 @@ def test_is_potential_match(comparison_space, sim_graph, mock_similarity):
     for a, b in comparison_space:
         sim_graph.add(a, b)
 
-    assert all(sim_graph.is_potential_match(a, b) for a, b in comparison_space)
-    assert all(not sim_graph.is_non_match(a, b) for a, b in comparison_space)
+    assert all(sim_graph.is_potential_match(a.id, b.id) for a, b in comparison_space)
+    assert all(not sim_graph.is_non_match(a.id, b.id) for a, b in comparison_space)
 
 
 def test_is_non_match(comparison_space, sim_graph, mock_similarity):
@@ -100,4 +100,4 @@ def test_is_non_match(comparison_space, sim_graph, mock_similarity):
     for a, b in comparison_space:
         sim_graph.add(a, b)
 
-    assert all(sim_graph.is_non_match(a, b) for a, b in comparison_space)
+    assert all(sim_graph.is_non_match(a.id, b.id) for a, b in comparison_space)
