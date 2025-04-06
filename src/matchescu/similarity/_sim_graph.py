@@ -6,6 +6,7 @@ from typing import Generator, Generic
 import networkx as nx
 
 from matchescu.similarity._matcher import Matcher, TRef
+from matchescu.similarity._persistence import GraphPersistence
 from matchescu.typing._references import EntityReferenceIdentifier
 
 
@@ -139,3 +140,25 @@ class SimilarityGraph(Generic[TRef]):
     ) -> float:
         data = self.__g.get_edge_data(left, right, default={})
         return float(data.get("weight", 0.0))
+
+    def load(self, persistence: GraphPersistence) -> "SimilarityGraph":
+        g = persistence.load()
+        self.__g = nx.DiGraph()
+        self.__g.add_nodes_from(g.nodes)
+        for u, v, data in g.edges(data=True):
+            edge_type = data.get("type", MatchEdgeType.MATCH)
+            self.__g.add_edge(
+                u,
+                v,
+                weight=data.get("weight", 1.0),
+                type=edge_type,
+            )
+            if edge_type == MatchEdgeType.MATCH:
+                self.__match_count += 1
+            elif edge_type == MatchEdgeType.POTENTIAL_MATCH:
+                self.__potential_match_count += 1
+        return self
+
+    def save(self, persistence: GraphPersistence) -> "SimilarityGraph":
+        persistence.save(self.__g)
+        return self
