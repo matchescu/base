@@ -1,9 +1,16 @@
 from unittest.mock import MagicMock
 
+import networkx as nx
 import pytest
 
 from matchescu.similarity._matcher import Matcher
+from matchescu.similarity._persistence import GraphPersistence
 from matchescu.similarity._sim_graph import SimilarityGraph, MatchEdgeType
+
+
+@pytest.fixture
+def persistence():
+    return MagicMock(spec=GraphPersistence)
 
 
 @pytest.fixture(scope="module")
@@ -101,3 +108,26 @@ def test_is_non_match(comparison_space, sim_graph, mock_similarity):
         sim_graph.add(a, b)
 
     assert all(sim_graph.is_non_match(a.id, b.id) for a, b in comparison_space)
+
+
+def test_save(sim_graph, ref, persistence):
+    sim_graph.add(ref("a", "test"), ref("b", "test"))
+
+    sim_graph.save(persistence)
+
+    assert persistence.save.call_count == 1
+
+
+def test_load(sim_graph, ref, persistence):
+    expected = nx.DiGraph()
+    expected.add_edge(
+        ref("a", "test").id, ref("b", "test").id, weight=1, type=MatchEdgeType.MATCH
+    )
+    persistence.load.return_value = expected
+
+    sim_graph.load(persistence)
+
+    assert persistence.load.call_count == 1
+    assert sim_graph.match_count == 1
+    assert sim_graph.potential_match_count == 0
+    assert len(sim_graph.nodes) == 2
