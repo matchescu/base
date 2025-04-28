@@ -1,4 +1,3 @@
-from enum import StrEnum
 from typing import Generator, Generic
 
 import networkx as nx
@@ -6,12 +5,6 @@ import networkx as nx
 from matchescu.similarity._matcher import Matcher, TRef
 from matchescu.similarity._persistence import GraphPersistence
 from matchescu.typing._references import EntityReferenceIdentifier
-
-
-class MatchEdgeType(StrEnum):
-    MATCH = "match"
-    POTENTIAL_MATCH = "potential_match"
-    NON_MATCH = "non_match"
 
 
 class ReferenceGraph(Generic[TRef]):
