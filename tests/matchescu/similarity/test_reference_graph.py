@@ -161,3 +161,36 @@ def test_load(reference_graph, ref, persistence, directed):
     assert reference_graph.has_edge(b.id, a.id) == (not directed)
     assert reference_graph.weight(a.id, b.id) == 0.42
     assert reference_graph.weight(b.id, a.id) == (0.42 if not directed else 0.0)
+
+
+@pytest.mark.parametrize("reference_graph", [False, True], indirect=["reference_graph"])
+def test_to_directed(reference_graph, ref, mock_similarity):
+    mock_similarity.side_effect = lambda x, y: 0.4 if x == a else 0.6
+    a = ref("a", "test")
+    b = ref("b", "test")
+    reference_graph.add(a, b)
+
+    result = reference_graph.to_directed()
+
+    assert isinstance(result, ReferenceGraph)
+    assert result.directed
+    assert result.has_edge(a.id, b.id)
+    assert result.has_edge(b.id, a.id) == (not reference_graph.directed)
+    assert result.weight(a.id, b.id) == 0.4
+    assert result.weight(b.id, a.id) == (0.6 if not reference_graph.directed else 0.0)
+
+
+@pytest.mark.parametrize("reference_graph", [False, True], indirect=["reference_graph"])
+def test_to_undirected(reference_graph, ref, mock_similarity):
+    mock_similarity.return_value = 0.42
+    a = ref("a", "test")
+    b = ref("b", "test")
+    reference_graph.add(a, b)
+
+    result = reference_graph.to_undirected()
+
+    assert isinstance(result, ReferenceGraph)
+    assert not result.directed
+    assert result.has_edge(a.id, b.id)
+    assert result.has_edge(b.id, a.id)
+    assert result.weight(b.id, a.id) == result.weight(a.id, b.id) == 0.42

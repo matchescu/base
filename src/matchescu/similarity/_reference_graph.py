@@ -61,7 +61,7 @@ class ReferenceGraph(Generic[TRef]):
         :return: ``self``, with the added edge.
         """
         sim_score = self.__matcher(left, right)
-        self.__g.add_edge(left.id, right.id, weight=sim_score)
+        self.__g.add_edge(left.id, right.id, weight=sim_score, refs=(left, right))
         return self
 
     def matches(
@@ -116,3 +116,31 @@ class ReferenceGraph(Generic[TRef]):
     def save(self, persistence: GraphPersistence) -> "ReferenceGraph":
         persistence.save(self.__g)
         return self
+
+    def to_undirected(self) -> "ReferenceGraph":
+        """Convert the graph to an undirected graph.
+
+        If the graph is already undirected, this method returns a copy of the
+        graph.
+        """
+        other = ReferenceGraph(self.__matcher, directed=False)
+        if self.__directed:
+            other.__g.add_edges_from(self.__g.edges(data=True))
+        else:
+            other.__g = self.__g.copy()
+        return other
+
+    def to_directed(self) -> "ReferenceGraph":
+        """Convert the graph to a bidirectional directed graph.
+
+        If the graph is already directed, this method returns a copy of the
+        graph.
+        """
+        other = ReferenceGraph(self.__matcher, directed=True)
+        if self.__directed:
+            other.__g = self.__g.copy()
+        else:
+            for _, __, (u, v) in self.__g.edges.data("refs", default=0.0):
+                other.add(u, v)
+                other.add(v, u)
+        return other
