@@ -37,7 +37,7 @@ class EntityReference(Record, Protocol):
         pass
 
 
-class EntityProfile(EntityReference, Iterable[EntityReference], Sized, Protocol):
+class EntityProfile(Iterable[EntityReference], Sized, Protocol):
     """Entity profiles are entity references aggregating other entity references.
 
     Concrete entity profiles have different representations according to the
