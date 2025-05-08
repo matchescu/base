@@ -144,3 +144,15 @@ class ReferenceGraph(Generic[TRef]):
                 other.add(u, v)
                 other.add(v, u)
         return other
+
+    def merge(self, other: "ReferenceGraph") -> "ReferenceGraph":
+        if self.__matcher != other.__matcher:
+            raise ValueError("Cannot merge graphs with different matchers.")
+        if self.__directed != other.__directed:
+            raise ValueError("Cannot merge graphs with different directions.")
+        g = self.__g.copy()
+        g.add_nodes_from(other.__g.nodes)
+        g.add_weighted_edges_from(other.__g.edges(data=True))
+        result = ReferenceGraph(self.__matcher, directed=self.__directed)
+        result.__g = g
+        return result
