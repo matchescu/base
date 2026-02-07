@@ -1,6 +1,8 @@
+import itertools
 from dataclasses import dataclass
-from typing import Hashable, Iterable, Sized, Protocol, Callable, Any, runtime_checkable
+from typing import Hashable, Iterable, Sized, Protocol, Callable, runtime_checkable
 
+from matchescu.data._record import Record as DataRecord
 from matchescu.typing._data import Record
 
 
@@ -23,19 +25,35 @@ class EntityReferenceIdentifier:
         return f"{self.source}({str(self.label)})"
 
 
-@runtime_checkable
-class EntityReference(Record, Protocol):
-    """An entity reference instance allows accessing data by name or index.
-
-    Attributes:
-        id EntityReferenceIdentifier: identifies the entity reference
-    """
-
+class EntityReference(DataRecord):
     id: EntityReferenceIdentifier
 
-    def as_dict(self) -> dict[str, Any]:
-        """Return a dictionary containing the reference's attribute names and values."""
-        pass
+    def __init__(self, identifier: EntityReferenceIdentifier, value: Iterable):
+        super().__init__(value)
+        self.id = identifier
+
+    def __eq__(self, __value):
+        if not isinstance(__value, EntityReference):
+            return False
+        return __value.id == self.id
+
+    def __ne__(self, __value):
+        return not self.__eq__(__value)
+
+    def __repr__(self):
+        return "EntityReference(id={})".format(repr(self.id))
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def __dir__(self):
+        return list(itertools.chain(super().__dir__(), self._attr_names.keys()))
+
+    def as_dict(self) -> dict:
+        return {
+            attr_name: self._attr_values[attr_idx]
+            for attr_name, attr_idx in self._attr_names.items()
+        }
 
 
 @runtime_checkable
