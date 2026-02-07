@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Hashable, Iterable, Sized, Protocol, Callable, Any
+from typing import Hashable, Iterable, Sized, Protocol, Callable, Any, runtime_checkable
 
 from matchescu.typing._data import Record
 
@@ -23,6 +23,7 @@ class EntityReferenceIdentifier:
         return f"{self.source}({str(self.label)})"
 
 
+@runtime_checkable
 class EntityReference(Record, Protocol):
     """An entity reference instance allows accessing data by name or index.
 
@@ -37,6 +38,7 @@ class EntityReference(Record, Protocol):
         pass
 
 
+@runtime_checkable
 class EntityProfile(Iterable[EntityReference], Sized, Protocol):
     """Entity profiles are entity references aggregating other entity references.
 
