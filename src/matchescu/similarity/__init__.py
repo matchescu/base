@@ -1,6 +1,13 @@
-from matchescu.similarity._matcher import Matcher
-from matchescu.similarity._persistence import GraphPersistence, GmlGraphPersistence
-from matchescu.similarity._reference_graph import ReferenceGraph
+from ._matcher import Matcher
+from ._result import MatchResult
+from ._persistence import GraphPersistence, GmlGraphPersistence
+from ._reference_graph import ReferenceGraph
 
 
-__all__ = ["GraphPersistence", "GmlGraphPersistence", "Matcher", "ReferenceGraph"]
+__all__ = [
+    "GraphPersistence",
+    "GmlGraphPersistence",
+    "Matcher",
+    "MatchResult",
+    "ReferenceGraph",
+]

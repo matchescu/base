@@ -1,23 +1,13 @@
 from typing import Protocol, TypeVar
 
-from matchescu.typing import EntityReference
-
+from ..typing._references import EntityReference
+from ._result import MatchResult
 
 TRef = TypeVar("TRef", bound=EntityReference)
 
 
 class Matcher(Protocol[TRef]):
-    @property
-    def non_match_threshold(self) -> float:
-        """Similarity score (ranged 0..1) below which two references are considered to truly mismatch."""
-        pass
-
-    @property
-    def match_threshold(self) -> float:
-        """Similarity score (ranged 0..1) above which two references are considered to truly match one another."""
-        pass
-
-    def __call__(self, left: TRef, right: TRef) -> float:
+    def __call__(self, left: TRef, right: TRef) -> MatchResult:
         """Return a similarity score between ``left`` and ``right``.
 
         :param left: an entity reference of any kind

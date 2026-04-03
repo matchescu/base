@@ -1,10 +1,11 @@
-from typing import Generator, Generic
+from typing import Generator, Generic, Callable, Optional
 
 import networkx as nx
 
-from matchescu.similarity._matcher import Matcher, TRef
-from matchescu.similarity._persistence import GraphPersistence
 from matchescu.typing._references import EntityReferenceIdentifier
+from ._matcher import Matcher, TRef
+from ._result import MatchResult
+from ._persistence import GraphPersistence
 
 
 class ReferenceGraph(Generic[TRef]):
@@ -23,10 +24,12 @@ class ReferenceGraph(Generic[TRef]):
         self,
         matcher: Matcher[TRef],
         directed: bool = False,
+        weight_computer: Optional[Callable[[MatchResult], float]] = None,
     ) -> None:
         self.__directed = directed
         self.__g = nx.DiGraph() if directed else nx.Graph()
         self.__matcher = matcher
+        self.__weight_computer = weight_computer or self._compute_weight
 
     def __repr__(self):
         return "SimilarityGraph(nodes={}, edges={}, matcher={})".format(
@@ -49,6 +52,14 @@ class ReferenceGraph(Generic[TRef]):
         """Returns the edges of the graph along with their similarity weights and types."""
         return self.__g.edges(data=True)
 
+    @staticmethod
+    def _compute_weight(match_result: MatchResult) -> float:
+        if match_result.label == 0:
+            numerator = 1 - match_result.label_weights[match_result.label]
+            denominator = len(match_result.label_weights) - 1
+            return numerator / denominator
+        return match_result.label_weights[match_result.label]
+
     def add(self, left: TRef, right: TRef) -> "ReferenceGraph":
         """Add an edge between two entity references.
 
@@ -60,8 +71,9 @@ class ReferenceGraph(Generic[TRef]):
 
         :return: ``self``, with the added edge.
         """
-        sim_score = self.__matcher(left, right)
-        self.__g.add_edge(left.id, right.id, weight=sim_score, refs=(left, right))
+        match_result = self.__matcher(left, right)
+        weight = self.__weight_computer(match_result)
+        self.__g.add_edge(left.id, right.id, weight=weight, refs=(left, right))
         return self
 
     def matches(
