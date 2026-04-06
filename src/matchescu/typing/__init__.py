@@ -6,7 +6,6 @@ from matchescu.typing._references import (
     EntityProfile,
 )
 
-
 __all__ = [
     "DataSource",
     "EntityReference",

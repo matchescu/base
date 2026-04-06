@@ -1,3 +1,4 @@
+import itertools
 from typing import Generator, Generic, Callable, Optional
 
 import networkx as nx
@@ -72,52 +73,84 @@ class ReferenceGraph(Generic[TRef]):
         :return: ``self``, with the added edge.
         """
         match_result = self.__matcher(left, right)
+        self.__g.add_node(left.id)
+        self.__g.add_node(right.id)
+        if match_result.label == 0:
+            return self
+
         weight = self.__weight_computer(match_result)
-        self.__g.add_edge(left.id, right.id, weight=weight, refs=(left, right))
+        if self.__directed and len(match_result.label_weights) > 2:
+            match match_result.label:
+                case 1:
+                    self.__g.add_edge(
+                        left.id, right.id, weight=weight, refs=(left, right)
+                    )
+                    self.__g.add_edge(
+                        right.id, left.id, weight=weight, refs=(right, left)
+                    )
+                case 2:
+                    self.__g.add_edge(
+                        left.id, right.id, weight=weight, refs=(left, right)
+                    )
+                case 3:
+                    self.__g.add_edge(
+                        right.id, left.id, weight=weight, refs=(right, left)
+                    )
+        else:  # classical, binary matcher (0, 1)
+            self.__g.add_edge(
+                left.id,
+                right.id,
+                weight=weight,
+                refs=(left, right),
+            )
+
         return self
 
     def matches(
-        self, match_min: float = 0.75
+        self, min_weight: float = 0.5
     ) -> Generator[
         tuple[EntityReferenceIdentifier, EntityReferenceIdentifier], None, None
     ]:
         yield from (
             (u, v)
-            for u, v, weight in self.__g.edges.data("weight", default=0.0)
-            if weight >= match_min
+            for u, v, weight in self.__g.edges.data("weight", default=False)
+            if weight >= min_weight
         )
 
     def potential_matches(
-        self, non_match_max: float = 0.25, match_min: float = 0.75
+        self, min_weight: float = 0.25, max_weight: float = 0.75
     ) -> Generator[
         tuple[EntityReferenceIdentifier, EntityReferenceIdentifier], None, None
     ]:
         yield from (
             (u, v)
             for u, v, weight in self.__g.edges.data("weight", default=0.0)
-            if non_match_max <= weight < match_min
+            if min_weight <= weight < max_weight
         )
 
     def non_matches(
-        self, non_match_max: float = 0.25
+        self,
     ) -> Generator[
         tuple[EntityReferenceIdentifier, EntityReferenceIdentifier], None, None
     ]:
+        generator = (
+            itertools.permutations if self.__directed else itertools.combinations
+        )
         yield from (
             (u, v)
-            for u, v, weight in self.__g.edges.data("weight", default=0.0)
-            if weight < non_match_max
+            for u, v in generator(self.__g.nodes, 2)
+            if not self.__g.has_edge(u, v)
         )
 
     def has_edge(
         self, u: EntityReferenceIdentifier, v: EntityReferenceIdentifier
     ) -> bool:
-        return (u, v) in self.__g.edges
+        return self.__g.has_edge(u, v)
 
     def weight(
-        self, left: EntityReferenceIdentifier, right: EntityReferenceIdentifier
+        self, u: EntityReferenceIdentifier, v: EntityReferenceIdentifier
     ) -> float:
-        data = self.__g.get_edge_data(left, right, default={})
+        data = self.__g.get_edge_data(u, v, default={})
         return float(data.get("weight", 0.0))
 
     def load(self, persistence: GraphPersistence) -> "ReferenceGraph":
