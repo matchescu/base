@@ -5,7 +5,6 @@ import networkx as nx
 import pytest
 
 from matchescu.similarity import MatchResult
-from matchescu.similarity._matcher import Matcher
 from matchescu.similarity._persistence import GraphPersistence
 from matchescu.similarity._reference_graph import ReferenceGraph
 
@@ -20,10 +19,9 @@ def comparison_space(ref):
     return {(ref(1, "a"), ref(1, "b")), (ref(1, "b"), ref(1, "a"))}
 
 
-def _match_result(match_prob: float) -> MatchResult:
-    label = int(match_prob > 0.5)
-    weights = [1 - match_prob, match_prob]
-    return MatchResult(label, weights)
+@pytest.fixture
+def comparison(ref_id):
+    return ref_id(1, "a"), ref_id(1, "b")
 
 
 @pytest.fixture
@@ -32,15 +30,15 @@ def is_match(request):
 
 
 @pytest.fixture
-def mock_similarity(request):
-    mock = MagicMock(name="mock_similarity", spec=Matcher)
-    param = getattr(request, "param", 0.51)
-    match param:
-        case float():
-            mock.return_value = _match_result(param)
-        case MatchResult():
-            mock.return_value = param
-    return mock
+def match_prediction(ref_id, request, comparison):
+    left, right = getattr(request, "param", comparison)
+    return MatchResult(left, right, 1, [0, 1])
+
+
+@pytest.fixture
+def non_match_prediction(ref_id, request, comparison):
+    left, right = getattr(request, "param", comparison)
+    return MatchResult(left, right, 0, [1, 0])
 
 
 @pytest.fixture
@@ -49,15 +47,8 @@ def is_directed(request):
 
 
 @pytest.fixture
-def reference_graph(mock_similarity, is_directed):
-    return ReferenceGraph(mock_similarity, directed=is_directed)
-
-
-def test_sim_graph_calls_sim(comparison_space, reference_graph, mock_similarity):
-    for a, b in comparison_space:
-        reference_graph.add(a, b)
-
-    assert mock_similarity.call_count == len(comparison_space)
+def reference_graph(is_directed):
+    return ReferenceGraph(directed=is_directed)
 
 
 @pytest.mark.parametrize(
@@ -65,32 +56,25 @@ def test_sim_graph_calls_sim(comparison_space, reference_graph, mock_similarity)
     [(True, 2), (False, 1)],
     indirect=["is_directed"],
 )
-def test_add_match_edge(comparison_space, reference_graph, expected_matches):
-    for a, b in comparison_space:
-        reference_graph.add(a, b)
+def test_add_match_edge(comparison, reference_graph, is_directed, expected_matches):
+    left, right = comparison
+
+    reference_graph.add(MatchResult(left, right, 1, [0, 1]))
+    reference_graph.add(MatchResult(right, left, 1, [0, 1]))
 
     matches = list(reference_graph.matches())
-
     assert len(matches) == expected_matches
 
 
 @pytest.mark.parametrize(
-    "is_directed,expected_matches",
-    [(True, 2), (False, 1)],
-    indirect=["is_directed"],
+    "min_weight,max_weight,expected", [(0.51, 1.0, 0), (0.0, 0.49, 0), (0.49, 0.51, 1)]
 )
-@pytest.mark.parametrize(
-    "mock_similarity", [MatchResult(1, [0.45, 0.55])], indirect=True
-)
-def test_add_potential_match_edge(
-    comparison_space, reference_graph, mock_similarity, expected_matches
-):
-    for a, b in comparison_space:
-        reference_graph.add(a, b)
+def test_match_filtering(reference_graph, ref_id, min_weight, max_weight, expected):
+    reference_graph.add(MatchResult(ref_id(1, "a"), ref_id(1, "b"), 1, [0.5, 0.5]))
 
-    potentials = list(reference_graph.potential_matches())
+    matches = list(reference_graph.matches(min_weight, max_weight))
 
-    assert len(potentials) == expected_matches
+    assert len(matches) == expected
 
 
 @pytest.mark.parametrize(
@@ -98,12 +82,10 @@ def test_add_potential_match_edge(
     [(True, 2), (False, 1)],
     indirect=["is_directed"],
 )
-def test_add_non_match(
-    comparison_space, reference_graph, mock_similarity, expected_non_matches
-):
-    mock_similarity.return_value = MatchResult(0, [1, 0])
-    for a, b in comparison_space:
-        reference_graph.add(a, b)
+def test_add_non_match(comparison, reference_graph, is_directed, expected_non_matches):
+    left, right = comparison
+    reference_graph.add(MatchResult(left, right, 0, [1, 0]))
+    reference_graph.add(MatchResult(right, left, 0, [1, 0]))
 
     non_matches = list(reference_graph.non_matches())
 
@@ -115,59 +97,64 @@ def test_add_non_match(
     [(False, True), (True, False)],
     indirect=["is_directed"],
 )
-def test_has_edge_directed(reference_graph, ref, expected):
-    a = ref("a", "test")
-    b = ref("b", "test")
-    reference_graph.add(a, b)
+def test_has_edge_directed(reference_graph, ref, is_directed, expected, comparison):
+    left, right = comparison
+    result = MatchResult(left, right, 1, [0, 1])
 
-    assert reference_graph.has_edge(b.id, a.id) == expected
+    reference_graph.add(result)
+
+    assert reference_graph.has_edge(right, left) == expected
+
+
+@pytest.mark.parametrize("label,weights", [(1, [0, 1]), (0, [1, 0])])
+def test_has_edge_is_match(reference_graph, ref, comparison, label, weights):
+    left, right = comparison
+
+    reference_graph.add(MatchResult(left, right, label, weights))
+
+    has_edge = reference_graph.has_edge(left, right)
+    is_match = label != 0
+    assert has_edge == is_match
+
+
+def test_weight_directed(reference_graph, comparison):
+    left, right = comparison
+    fwd_result = MatchResult(left, right, 1, [0.4, 0.6])
+    rev_result = MatchResult(right, left, 1, [0.3, 0.7])
+
+    reference_graph.add(fwd_result)
+    reference_graph.add(rev_result)
+
+    assert reference_graph.weight(left, right) == 0.6
+    assert reference_graph.weight(right, left) == 0.7
 
 
 @pytest.mark.parametrize(
-    "mock_similarity",
-    [MatchResult(0, [1, 0]), MatchResult(1, [0, 1])],
-    indirect=["mock_similarity"],
+    "fwd,rev,expected_fwd,expected_rev,is_directed",
+    [
+        (0.6, 0.7, 0.6, 0.7, True),
+        (0.7, 0.6, 0.7, 0.6, True),
+        (0.6, 0.7, 0.7, 0.7, False),
+        (0.7, 0.6, 0.7, 0.7, False),
+    ],
+    indirect=["is_directed"],
 )
-def test_has_edge_is_match(reference_graph, ref, mock_similarity):
-    a = ref("a", "test")
-    b = ref("b", "test")
-    reference_graph.add(a, b)
+def test_weight_undirected_is_always_highest_weight(
+    is_directed, reference_graph, comparison, fwd, rev, expected_fwd, expected_rev
+):
+    left, right = comparison
+    fwd_result = MatchResult(left, right, 1, [1 - fwd, fwd])
+    rev_result = MatchResult(right, left, 1, [1 - rev, rev])
 
-    result_label = mock_similarity.return_value.label != 0
-    assert reference_graph.has_edge(a.id, b.id) == result_label
+    reference_graph.add(fwd_result)
+    reference_graph.add(rev_result)
 
-
-def test_weight_directed(reference_graph, mock_similarity, ref):
-    a = ref("a", "test")
-    b = ref("b", "test")
-    mock_similarity.side_effect = lambda x, y: (
-        _match_result(0.51) if x == a else _match_result(0.6)
-    )
-
-    reference_graph.add(a, b)
-    reference_graph.add(b, a)
-
-    assert reference_graph.weight(a.id, b.id) == 0.51
-    assert reference_graph.weight(b.id, a.id) == 0.6
+    assert reference_graph.weight(left, right) == expected_fwd
+    assert reference_graph.weight(right, left) == expected_rev
 
 
-@pytest.mark.parametrize("is_directed", [False], indirect=True)
-def test_weight_undirected(reference_graph, mock_similarity, ref):
-    a = ref("a", "test")
-    b = ref("b", "test")
-    mock_similarity.side_effect = lambda x, y: (
-        _match_result(0.4) if x == a else _match_result(0.6)
-    )
-
-    reference_graph.add(a, b)
-    reference_graph.add(b, a)
-
-    assert reference_graph.weight(a.id, b.id) == 0.6
-    assert reference_graph.weight(b.id, a.id) == 0.6
-
-
-def test_save(reference_graph, ref, persistence):
-    reference_graph.add(ref("a", "test"), ref("b", "test"))
+def test_save(reference_graph, ref, persistence, match_prediction):
+    reference_graph.add(match_prediction)
 
     reference_graph.save(persistence)
 
@@ -177,82 +164,84 @@ def test_save(reference_graph, ref, persistence):
     assert len(actual_graph.edges) == 1
 
 
-@pytest.mark.parametrize(
-    "reference_graph,directed",
-    [(False, True), (True, False)],
-    indirect=["reference_graph"],
-)
-def test_load(reference_graph, ref, persistence, directed):
+@pytest.mark.parametrize("directed", [False, True])
+def test_load(ref_id, persistence, directed):
     expected = nx.DiGraph() if directed else nx.Graph()
-    a = ref("a", "test")
-    b = ref("b", "test")
-    expected.add_edge(a.id, b.id, weight=0.42)
+    a = ref_id("a", "test")
+    b = ref_id("b", "test")
+    expected.add_edge(a, b, weight=0.42, label=1)
     persistence.load.return_value = expected
 
-    reference_graph.load(persistence)
+    reference_graph = ReferenceGraph.load(persistence)
 
     assert len(reference_graph.nodes) == 2
     assert len(reference_graph.edges) == 1
     assert reference_graph.directed == directed
-    assert reference_graph.has_edge(a.id, b.id)
-    assert reference_graph.has_edge(b.id, a.id) == (not directed)
-    assert reference_graph.weight(a.id, b.id) == 0.42
-    assert reference_graph.weight(b.id, a.id) == (0.42 if not directed else 0.0)
+    assert reference_graph.has_edge(a, b)
+    assert reference_graph.has_edge(b, a) == (not directed)
+    assert reference_graph.weight(a, b) == 0.42
+    assert reference_graph.weight(b, a) == (0.42 if not directed else 0.0)
+    assert reference_graph.label(a, b) == 1
+    assert reference_graph.label(b, a) == 0 if directed else 1
 
 
 @pytest.mark.parametrize("is_directed", [False, True], indirect=["is_directed"])
-def test_to_directed(reference_graph, ref, mock_similarity):
-    mock_similarity.side_effect = lambda x, y: (
-        _match_result(0.51) if x == a else _match_result(0.6)
-    )
-    a = ref("a", "test")
-    b = ref("b", "test")
-    reference_graph.add(a, b)
+def test_to_directed(is_directed, reference_graph, match_prediction):
+    reference_graph.add(match_prediction)
 
     result = reference_graph.to_directed()
 
     assert isinstance(result, ReferenceGraph)
     assert result.directed
-    assert result.has_edge(a.id, b.id)
-    assert result.has_edge(b.id, a.id) == (not reference_graph.directed)
-    assert result.weight(a.id, b.id) == 0.51
-    assert result.weight(b.id, a.id) == (0.6 if not reference_graph.directed else 0.0)
+    left = match_prediction.left
+    right = match_prediction.right
+    assert result.has_edge(left, right)
+    assert result.has_edge(right, left) == (not reference_graph.directed)
+    assert result.weight(left, right) == 1.0
+    assert result.weight(right, left) == (1.0 if not reference_graph.directed else 0.0)
 
 
-@pytest.mark.parametrize(
-    "is_directed,mock_similarity", [(False, 0.52), (True, 0.52)], indirect=True
-)
-def test_to_undirected(reference_graph, ref, mock_similarity, is_directed):
-    a = ref("a", "test")
-    b = ref("b", "test")
-    reference_graph.add(a, b)
+@pytest.mark.parametrize("is_directed", [False, True], indirect=True)
+def test_to_undirected(is_directed, reference_graph, match_prediction):
+    reference_graph.add(match_prediction)
 
     result = reference_graph.to_undirected()
 
     assert isinstance(result, ReferenceGraph)
     assert not result.directed
-    assert result.has_edge(a.id, b.id)
-    assert result.has_edge(b.id, a.id)
-    assert isclose(result.weight(a.id, b.id), 0.52)
-    assert isclose(result.weight(b.id, a.id), 0.52)
+    left = match_prediction.left
+    right = match_prediction.right
+    assert result.has_edge(left, right)
+    assert result.has_edge(right, left)
+    assert isclose(result.weight(left, right), 1)
+    assert isclose(result.weight(right, left), 1)
 
 
 @pytest.mark.parametrize(
-    "is_directed,mock_similarity,weight_ab, weight_ba",
+    "is_directed,label,weights,prediction,fwd_weight,rev_weight",
     [
-        (True, MatchResult(0, [0.27, 0.26, 0.24, 0.23]), 0, 0),
-        (True, MatchResult(1, [0.27, 0.26, 0.24, 0.23]), 0.26, 0.26),
-        (True, MatchResult(2, [0.27, 0.26, 0.24, 0.23]), 0.24, 0.0),
-        (True, MatchResult(3, [0.27, 0.26, 0.24, 0.23]), 0.0, 0.23),
+        (True, 0, [0.27, 0.26, 0.24, 0.23], 0, 0, 0),
+        (True, 1, [0.27, 0.26, 0.24, 0.23], 1, 0.26, 0.26),
+        (True, 2, [0.27, 0.26, 0.24, 0.23], 2, 0.24, 0.0),
+        (False, 0, [0.27, 0.26, 0.24, 0.23], 0, 0, 0),
+        (False, 1, [0.27, 0.26, 0.24, 0.23], 1, 0.26, 0.26),
+        (False, 2, [0.27, 0.26, 0.24, 0.23], 1, 0.24, 0.24),
     ],
-    indirect=["mock_similarity", "is_directed"],
+    indirect=["is_directed"],
 )
-def test_default_weight_computation(
-    reference_graph, ref, mock_similarity, weight_ab, weight_ba
+def test_multiclass_weight_computation(
+    is_directed,
+    reference_graph,
+    comparison,
+    label,
+    weights,
+    prediction,
+    fwd_weight,
+    rev_weight,
 ):
-    a = ref("a", "test")
-    b = ref("b", "test")
-    reference_graph.add(a, b)
+    left, right = comparison
 
-    assert isclose(reference_graph.weight(a.id, b.id), weight_ab)
-    assert isclose(reference_graph.weight(b.id, a.id), weight_ba)
+    reference_graph.add(MatchResult(left, right, label, weights))
+
+    assert isclose(reference_graph.weight(left, right), fwd_weight)
+    assert isclose(reference_graph.weight(right, left), rev_weight)

@@ -1,42 +1,42 @@
 import itertools
-from typing import Generator, Generic, Callable, Optional
+from typing import Generator, Callable, Optional, Self
 
 import networkx as nx
 
-from matchescu.typing._references import EntityReferenceIdentifier
-from ._matcher import Matcher, TRef
+from matchescu.typing._references import EntityReferenceIdentifier as RefId
 from ._result import MatchResult
 from ._persistence import GraphPersistence
 
 
-class ReferenceGraph(Generic[TRef]):
+class ReferenceGraph:
     """Graph representation of the similarity between entity references.
 
-    The nodes of the graph are entity references that were compared against each
-    other when the ``add`` method was called. Edges in this graph are weighted
-    using the matcher passed to the constructor.
+    The nodes of the graph are entity reference identifiers. The edges weighted
+    on the similarity between nodes. The graph may be directed or undirected.
+    By default, it is undirected, suggesting that similarity is symmetric with
+    respect to input order, i.e. ``similarity(x, y) == similarity(y, x)``.
 
-    Reference graphs may be directed or undirected. By default, they are
-    undirected, suggesting that the matcher is symmetric,
-    i.e. ``matcher(x, y) == matcher(y, x)``.
+    When the graph is directed (i.e., ``similarity(x, y) != similarity(y, x)``),
+    the weight of the directed edge from node ``u`` to ``v`` is defined by the
+    match probability in that direction, defined as the probability of ``v``
+    being a match in the context of ``u`` plus the probability of a symmetric
+    match (i.e. the undirected case).
     """
 
     def __init__(
         self,
-        matcher: Matcher[TRef],
         directed: bool = False,
         weight_computer: Optional[Callable[[MatchResult], float]] = None,
     ) -> None:
         self.__directed = directed
         self.__g = nx.DiGraph() if directed else nx.Graph()
-        self.__matcher = matcher
         self.__weight_computer = weight_computer or self._compute_weight
 
     def __repr__(self):
-        return "SimilarityGraph(nodes={}, edges={}, matcher={})".format(
+        return "ReferenceGraph(nodes={}, edges={}, directed={})".format(
             len(self.__g.nodes),
             len(self.__g.edges),
-            repr(self.__matcher),
+            self.__directed,
         )
 
     @property
@@ -53,86 +53,65 @@ class ReferenceGraph(Generic[TRef]):
         """Returns the edges of the graph along with their similarity weights and types."""
         return self.__g.edges(data=True)
 
-    @staticmethod
-    def _compute_weight(match_result: MatchResult) -> float:
+    @classmethod
+    def _clamp(cls, value: float) -> float:
+        return max(min(value, 1.0), 0.0)
+
+    @classmethod
+    def _compute_weight(cls, match_result: MatchResult) -> float:
+        weight = cls._clamp(match_result.label_weights[match_result.label])
         if match_result.label == 0:
-            numerator = 1 - match_result.label_weights[match_result.label]
+            numerator = 1 - weight
             denominator = len(match_result.label_weights) - 1
             return numerator / denominator
-        return match_result.label_weights[match_result.label]
+        return weight
 
-    def add(self, left: TRef, right: TRef) -> "ReferenceGraph":
+    def add(self, result: MatchResult) -> Self:
         """Add an edge between two entity references.
 
         The edge is added based on the configured similarity thresholds based
         on the similarity computed by the configured matcher.
 
-        :param left: left entity reference
-        :param right: right entity reference
+        :param result: the result of a match operation
 
         :return: ``self``, with the added edge.
         """
-        match_result = self.__matcher(left, right)
-        self.__g.add_node(left.id)
-        self.__g.add_node(right.id)
-        if match_result.label == 0:
+        self.__g.add_node(result.left)
+        self.__g.add_node(result.right)
+        if result.label == 0:
             return self
 
-        weight = self.__weight_computer(match_result)
-        if self.__directed and len(match_result.label_weights) > 2:
-            match match_result.label:
+        weight = self.__weight_computer(result)
+        if self.__directed and len(result.label_weights) > 2:
+            match result.label:
                 case 1:
                     self.__g.add_edge(
-                        left.id, right.id, weight=weight, refs=(left, right)
+                        result.left, result.right, weight=weight, label=result.label
                     )
                     self.__g.add_edge(
-                        right.id, left.id, weight=weight, refs=(right, left)
+                        result.right, result.left, weight=weight, label=result.label
                     )
                 case 2:
                     self.__g.add_edge(
-                        left.id, right.id, weight=weight, refs=(left, right)
+                        result.left, result.right, weight=weight, label=result.label
                     )
-                case 3:
-                    self.__g.add_edge(
-                        right.id, left.id, weight=weight, refs=(right, left)
-                    )
-        else:  # classical, binary matcher (0, 1)
-            self.__g.add_edge(
-                left.id,
-                right.id,
-                weight=weight,
-                refs=(left, right),
-            )
+        else:  # classic binary matcher (0, 1) -or- not a directed graph
+            prev_weight = self.weight(result.left, result.right)
+            weight = max(weight, prev_weight)
+            self.__g.add_edge(result.left, result.right, weight=weight, label=1)
 
         return self
 
     def matches(
-        self, min_weight: float = 0.5
-    ) -> Generator[
-        tuple[EntityReferenceIdentifier, EntityReferenceIdentifier], None, None
-    ]:
+        self, min_weight: float = 0.0, max_weight: float = 1.0
+    ) -> Generator[tuple[RefId, RefId], None, None]:
         yield from (
             (u, v)
             for u, v, weight in self.__g.edges.data("weight", default=False)
-            if weight >= min_weight
+            if min_weight <= weight <= max_weight
         )
 
-    def potential_matches(
-        self, min_weight: float = 0.25, max_weight: float = 0.75
-    ) -> Generator[
-        tuple[EntityReferenceIdentifier, EntityReferenceIdentifier], None, None
-    ]:
-        yield from (
-            (u, v)
-            for u, v, weight in self.__g.edges.data("weight", default=0.0)
-            if min_weight <= weight < max_weight
-        )
-
-    def non_matches(
-        self,
-    ) -> Generator[
-        tuple[EntityReferenceIdentifier, EntityReferenceIdentifier], None, None
-    ]:
+    def non_matches(self) -> Generator[tuple[RefId, RefId], None, None]:
         generator = (
             itertools.permutations if self.__directed else itertools.combinations
         )
@@ -142,21 +121,24 @@ class ReferenceGraph(Generic[TRef]):
             if not self.__g.has_edge(u, v)
         )
 
-    def has_edge(
-        self, u: EntityReferenceIdentifier, v: EntityReferenceIdentifier
-    ) -> bool:
+    def has_edge(self, u: RefId, v: RefId) -> bool:
         return self.__g.has_edge(u, v)
 
-    def weight(
-        self, u: EntityReferenceIdentifier, v: EntityReferenceIdentifier
-    ) -> float:
+    def weight(self, u: RefId, v: RefId) -> float:
         data = self.__g.get_edge_data(u, v, default={})
         return float(data.get("weight", 0.0))
 
-    def load(self, persistence: GraphPersistence) -> "ReferenceGraph":
-        self.__g = persistence.load()
-        self.__directed = self.__g.is_directed()
-        return self
+    def label(self, u: RefId, v: RefId) -> int:
+        data = self.__g.get_edge_data(u, v, default={})
+        return int(data.get("label", 0))
+
+    @classmethod
+    def load(cls, persistence: GraphPersistence) -> "ReferenceGraph":
+        obj = cls()
+        nxg = persistence.load()
+        obj.__g = nxg
+        obj.__directed = nxg.is_directed()
+        return obj
 
     def save(self, persistence: GraphPersistence) -> "ReferenceGraph":
         persistence.save(self.__g)
@@ -168,7 +150,7 @@ class ReferenceGraph(Generic[TRef]):
         If the graph is already undirected, this method returns a copy of the
         graph.
         """
-        other = ReferenceGraph(self.__matcher, directed=False)
+        other = ReferenceGraph(directed=False)
         if self.__directed:
             other.__g.add_edges_from(self.__g.edges(data=True))
         else:
@@ -181,21 +163,17 @@ class ReferenceGraph(Generic[TRef]):
         If the graph is already directed, this method returns a copy of the
         graph.
         """
-        other = ReferenceGraph(self.__matcher, directed=True)
-        if self.__directed:
-            other.__g = self.__g.copy()
-        else:
-            for _, __, (u, v) in self.__g.edges.data("refs", default=0.0):
-                other.add(u, v)
-                other.add(v, u)
+        other = ReferenceGraph(directed=True)
+        other.__g = self.__g.copy()
+        if not self.__directed:
+            for u, v, data in self.__g.edges(data=True):
+                other.__g.add_edge(v, u, **data)
         return other
 
     def merge(self, other: "ReferenceGraph") -> "ReferenceGraph":
-        if self.__matcher != other.__matcher:
-            raise ValueError("Cannot merge graphs with different matchers.")
         if self.__directed != other.__directed:
-            raise ValueError("Cannot merge graphs with different directions.")
+            raise ValueError("can't merge directed and undirected graphs")
         g = nx.compose(self.__g, other.__g)
-        result = ReferenceGraph(self.__matcher, directed=self.__directed)
+        result = ReferenceGraph(directed=self.__directed)
         result.__g = g
         return result

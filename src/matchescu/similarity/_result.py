@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from matchescu.typing import EntityReferenceIdentifier
+
 
 @dataclass(frozen=True)
 class MatchResult:
@@ -11,5 +13,7 @@ class MatchResult:
         We assume the sum of the weights equals 1.
     """
 
+    left: EntityReferenceIdentifier
+    right: EntityReferenceIdentifier
     label: int
     label_weights: list[float]
