@@ -1,10 +1,10 @@
-from ._result import MatchResult
-from ._persistence import GraphPersistence, GmlGraphPersistence
+from ._persistence import GmlGraphPersistence, GraphPersistence
 from ._reference_graph import ReferenceGraph
+from ._result import MatchResult
 
 __all__ = [
-    "GraphPersistence",
     "GmlGraphPersistence",
+    "GraphPersistence",
     "MatchResult",
     "ReferenceGraph",
 ]

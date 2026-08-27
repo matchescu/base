@@ -1,5 +1,5 @@
-from collections.abc import Sequence, Iterable
-from typing import Sized, Protocol, Union, Any, TypeVar, Callable, Generator
+from collections.abc import Callable, Generator, Iterable, Sequence, Sized
+from typing import Any, Protocol, TypeVar
 
 
 class Record(Sized, Iterable, Protocol):
@@ -11,7 +11,7 @@ class Record(Sized, Iterable, Protocol):
     index.
     """
 
-    def __getitem__(self, item: Union[str, int]) -> Any:
+    def __getitem__(self, item: str | int) -> Any:
         """Record values may be accessed by name or index."""
 
 

@@ -1,7 +1,8 @@
+import json
 from abc import ABCMeta, abstractmethod
 
-import json
 import networkx as nx
+
 from matchescu.typing import EntityReference, EntityReferenceIdentifier
 
 

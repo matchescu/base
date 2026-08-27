@@ -1,5 +1,5 @@
-from collections.abc import Iterable
-from typing import Any, Iterator
+from collections.abc import Iterable, Iterator
+from typing import Any
 
 
 class Record:

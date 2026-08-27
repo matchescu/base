@@ -1,11 +1,13 @@
 import itertools
-from typing import Generator, Callable, Optional, Self
+from collections.abc import Callable, Generator
+from typing import Self
 
 import networkx as nx
 
 from matchescu.typing._references import EntityReferenceIdentifier as RefId
-from ._result import MatchResult
+
 from ._persistence import GraphPersistence
+from ._result import MatchResult
 
 
 class ReferenceGraph:
@@ -26,18 +28,14 @@ class ReferenceGraph:
     def __init__(
         self,
         directed: bool = False,
-        weight_computer: Optional[Callable[[MatchResult], float]] = None,
+        weight_computer: Callable[[MatchResult], float] | None = None,
     ) -> None:
         self.__directed = directed
         self.__g = nx.DiGraph() if directed else nx.Graph()
         self.__weight_computer = weight_computer or self._compute_weight
 
     def __repr__(self):
-        return "ReferenceGraph(nodes={}, edges={}, directed={})".format(
-            len(self.__g.nodes),
-            len(self.__g.edges),
-            self.__directed,
-        )
+        return f"ReferenceGraph(nodes={len(self.__g.nodes)}, edges={len(self.__g.edges)}, directed={self.__directed})"
 
     @property
     def directed(self):

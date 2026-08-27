@@ -1,4 +1,4 @@
-from typing import Callable, Hashable
+from collections.abc import Callable, Hashable
 from unittest.mock import MagicMock
 
 import pytest

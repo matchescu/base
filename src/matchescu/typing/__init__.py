@@ -1,19 +1,19 @@
-from matchescu.typing._data import Record, RecordSampler, DataSource, Trait, TRecord
+from matchescu.typing._data import DataSource, Record, RecordSampler, Trait, TRecord
 from matchescu.typing._references import (
-    EntityReferenceIdentifier,
-    EntityReference,
-    EntityReferenceIdFactory,
     EntityProfile,
+    EntityReference,
+    EntityReferenceIdentifier,
+    EntityReferenceIdFactory,
 )
 
 __all__ = [
     "DataSource",
-    "EntityReference",
-    "EntityReferenceIdentifier",
-    "EntityReferenceIdFactory",
     "EntityProfile",
+    "EntityReference",
+    "EntityReferenceIdFactory",
+    "EntityReferenceIdentifier",
     "Record",
     "RecordSampler",
-    "Trait",
     "TRecord",
+    "Trait",
 ]

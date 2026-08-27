@@ -1,6 +1,7 @@
 import itertools
+from collections.abc import Callable, Hashable, Iterable, Sized
 from dataclasses import dataclass
-from typing import Hashable, Iterable, Sized, Protocol, Callable, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from matchescu.data._record import Record as DataRecord
 from matchescu.typing._data import Record
@@ -19,10 +20,10 @@ class EntityReferenceIdentifier:
     source: str
 
     def __repr__(self) -> str:
-        return f"ref_id{{{self.source},{repr(self.label)}}}"
+        return f"ref_id{{{self.source},{self.label!r}}}"
 
     def __str__(self) -> str:
-        return f"{self.source}({str(self.label)})"
+        return f"{self.source}({self.label!s})"
 
 
 class EntityReference(DataRecord):
@@ -32,16 +33,16 @@ class EntityReference(DataRecord):
         super().__init__(value)
         self.id = identifier
 
-    def __eq__(self, __value):
-        if not isinstance(__value, EntityReference):
+    def __eq__(self, value):
+        if not isinstance(value, EntityReference):
             return False
-        return __value.id == self.id
+        return value.id == self.id
 
-    def __ne__(self, __value):
-        return not self.__eq__(__value)
+    def __ne__(self, value):
+        return not self.__eq__(value)
 
     def __repr__(self):
-        return "EntityReference(id={})".format(repr(self.id))
+        return f"EntityReference(id={self.id!r})"
 
     def __hash__(self):
         return hash(self.id)
