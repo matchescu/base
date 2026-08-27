@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "matchescu-base"
-version = "0.27.5"
+version = "0.27.6"
 description = "Base abstract data types for Entity Resolution"
 authors = ["Andrei Olar <andrei.olar@ubbcluj.ro>"]
 readme = "README.md"
@@ -14,7 +14,7 @@ networkx = "^3.6.1"
 pytest = "^8.4.2"
 mypy = "^1.20.2"
 black = "^25.12.0"
-ruff = "^0.16.4"
+ruff = "^0.16.5"
 
 [build-system]
 requires = ["poetry-core"]
